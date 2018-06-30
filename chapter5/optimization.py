@@ -32,13 +32,13 @@ def printschedule(r):
     for d in range(6):
         name, origin = people[d]
         out = flights[(origin,destination)][r[2*d]]
-        ret = flights[(destination,origin)][r[2*d+1]]
-        print '%10s%10s %5s-%5s $%3s %5s-%5s $%3s' % (name,origin,
+        ret = flights[(destination,origin)][r[2*d + 1]]
+        print '%10s%10s %5s-%5s $%3s %5s-%5s $%3s' % (name, origin,
                                                       out[0],out[1],out[2],
                                                       ret[0],ret[1],ret[2])
 
-r = (1,4,3,2,7,3,6,3,2,4,5,3)
-printschedule(r)
+#r = (1,4,3,2,7,3,6,3,2,4,5,3)
+#printschedule(r)
     
 def schedulecost(sol):
     totalprice=0
@@ -96,20 +96,22 @@ def hillclimb(domain,costf):
     # Create a random solution
     sol=[random.randint(domain[i][0],domain[i][1]) for i in range(len(domain))]
     print('#intial: ', sol)
+    printschedule(sol)
+    print('#initial cost: ', costf(sol))
 
     # Main loop
+    count = 0
     while 1:
         # Create list of neighboring solutions
         neighbors=[]
         
         for j in range(len(domain)): # One away in each direction
             if sol[j] > domain[j][0]:  # there is room on left
-                neighbors.append(sol[0:j]+[sol[j]-1]+sol[j+1:])
-            if sol[j]<domain[j][1]:  # there is room on right
-                neighbors.append(sol[0:j]+[sol[j]+1]+sol[j+1:])
+                neighbors.append(sol[0:j] + [sol[j] - 1] + sol[j+1:])
+            if sol[j] < domain[j][1]:  # there is room on right
+                neighbors.append(sol[0:j] + [sol[j] + 1] + sol[j+1:])
         
-        pprint(neighbors)
-        return sol
+        #pprint(neighbors)
         # See what the best solution amongst the neighbors is
         current=costf(sol)
         best=current
@@ -120,53 +122,64 @@ def hillclimb(domain,costf):
                 sol=neighbors[j]
         
         # If there's no improvement, then we've reached the top
+        count += 1
         if best==current:
+            print('#loops: ', count)
             break
     return sol
 
-
 """
-#r = (1,4,3,2,7,3,6,3,2,4,5,3)
-domain = [(0, 9)]*10
+domain = [(0, 9)]*12
 r = hillclimb(domain, schedulecost)
+print('#Hillclimb sol: ', r)
 cost = schedulecost(r)
-print(cost) # 5285 (initial cost)
-sys.exit(0)
+print('#Hillclimn cost: ', cost)
+printschedule(r)
 """
-
 
   
-def annealingoptimize(domain,costf,T=10000.0,cool=0.95,step=1):
+def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
     # Initialize the values randomly
-    vec=[float(random.randint(domain[i][0],domain[i][1])) 
-         for i in range(len(domain))]
+    vec=[random.randint(domain[i][0],domain[i][1]) for i in range(len(domain))]
     
-    while T>0.1:
+    count = 0
+    while T > 0.1:
+        count += 1
         # Choose one of the indices
-        i=random.randint(0,len(domain)-1)
+        i = random.randint(0, len(domain) - 1)
     
         # Choose a direction to change it
-        dir=random.randint(-step,step)
+        #dir=random.randint(-step, step)
+        delta = random.choice([-step, step])
     
         # Create a new list with one of the values changed
-        vecb=vec[:]
-        vecb[i]+=dir
-        if vecb[i]<domain[i][0]: vecb[i]=domain[i][0]
-        elif vecb[i]>domain[i][1]: vecb[i]=domain[i][1]
+        vecb = vec[:]
+        vecb[i] += delta
+        if vecb[i] < domain[i][0]: vecb[i] = domain[i][0]
+        elif vecb[i] > domain[i][1]: vecb[i] = domain[i][1]
     
         # Calculate the current cost and the new cost
-        ea=costf(vec)
-        eb=costf(vecb)
-        p=pow(math.e,(-eb-ea)/T)
+        ea, eb = costf(vec), costf(vecb)
     
-        # Is it better, or does it make the probability
-        # cutoff?
-        if (eb<ea or random.random()<p):
-            vec=vecb      
+        # Applying SA acceptance prob logic
+        if eb < ea:
+            vec=vecb
+        else:  # take worse solutin at p (decrease to zero along with T)
+            p = pow(math.e, -1 * (eb-ea) / T)
+            if p > random.random():
+                vec=vecb
       
         # Decrease the temperature
-        T=T*cool
+        T = T*cool
+    print('#total loops: ', count)
     return vec
+
+domain = [(0, 9)]*12
+r = annealingoptimize(domain, schedulecost)
+print('#Annealing sol: ', r)
+cost = schedulecost(r)
+print('#Anealing cost: ', cost) # ('#initial cost: ', 5983); ('#hillclimb cost: ', 3690); ('#annealing cost: ', 2789)
+printschedule(r)
   
 def geneticoptimize(domain,costf,popsize=50,step=1,
                     mutprob=0.2,elite=0.2,maxiter=100):
