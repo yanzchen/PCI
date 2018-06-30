@@ -1,6 +1,9 @@
 import time
 import random
 import math
+import sys
+
+from pprint import pprint
 
 people = [('Seymour','BOS'),
           ('Franny','DAL'),
@@ -67,6 +70,7 @@ def schedulecost(sol):
     if latestarrival>earliestdep: totalprice+=50
     
     return totalprice+totalwait
+
   
 def randomoptimize(domain,costf):
     best=999999999
@@ -87,20 +91,22 @@ def randomoptimize(domain,costf):
   
 def hillclimb(domain,costf):
     # Create a random solution
-    sol=[random.randint(domain[i][0],domain[i][1])
-        for i in range(len(domain))]
+    sol=[random.randint(domain[i][0],domain[i][1]) for i in range(len(domain))]
+    print('#intial: ', sol)
+
     # Main loop
     while 1:
         # Create list of neighboring solutions
         neighbors=[]
         
-        for j in range(len(domain)):
-            # One away in each direction
-            if sol[j]>domain[j][0]:
-                neighbors.append(sol[0:j]+[sol[j]+1]+sol[j+1:])
-            if sol[j]<domain[j][1]:
+        for j in range(len(domain)): # One away in each direction
+            if sol[j] > domain[j][0]:  # there is room on left
                 neighbors.append(sol[0:j]+[sol[j]-1]+sol[j+1:])
+            if sol[j]<domain[j][1]:  # there is room on right
+                neighbors.append(sol[0:j]+[sol[j]+1]+sol[j+1:])
         
+        pprint(neighbors)
+        return sol
         # See what the best solution amongst the neighbors is
         current=costf(sol)
         best=current
@@ -114,6 +120,18 @@ def hillclimb(domain,costf):
         if best==current:
             break
     return sol
+
+
+"""
+#r = (1,4,3,2,7,3,6,3,2,4,5,3)
+domain = [(0, 9)]*10
+r = hillclimb(domain, schedulecost)
+cost = schedulecost(r)
+print(cost) # 5285 (initial cost)
+sys.exit(0)
+"""
+
+
   
 def annealingoptimize(domain,costf,T=10000.0,cool=0.95,step=1):
     # Initialize the values randomly
