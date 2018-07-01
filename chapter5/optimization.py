@@ -173,13 +173,14 @@ def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
         T = T*cool
     print('#total loops: ', count)
     return vec
-
+"""
 domain = [(0, 9)]*12
 r = annealingoptimize(domain, schedulecost)
 print('#Annealing sol: ', r)
 cost = schedulecost(r)
 print('#Anealing cost: ', cost) # ('#initial cost: ', 5983); ('#hillclimb cost: ', 3690); ('#annealing cost: ', 2789)
 printschedule(r)
+"""
   
 def geneticoptimize(domain,costf,popsize=50,step=1,
                     mutprob=0.2,elite=0.2,maxiter=100):
@@ -190,6 +191,7 @@ def geneticoptimize(domain,costf,popsize=50,step=1,
             return vec[0:i]+[vec[i]-step]+vec[i+1:] 
         elif vec[i]<domain[i][1]:
             return vec[0:i]+[vec[i]+step]+vec[i+1:]
+        return vec
         
     # Crossover Operation
     def crossover(r1,r2):
@@ -208,7 +210,7 @@ def geneticoptimize(domain,costf,popsize=50,step=1,
     
     # Main loop 
     for i in range(maxiter):
-        scores=[(costf(v),v) for v in pop]
+        scores = [(costf(v),v) for v in pop]
         scores.sort()
         ranked=[v for (s,v) in scores]
         
@@ -217,19 +219,24 @@ def geneticoptimize(domain,costf,popsize=50,step=1,
         
         # Add mutated and bred forms of the winners
         while len(pop)<popsize:
-            if random.random()<mutprob:
-      
-                # Mutation
+            if random.random()<mutprob: # Mutation
                 c=random.randint(0,topelite)
                 pop.append(mutate(ranked[c]))
-            else:
-            
-                # Crossover
+            else: # Crossover
                 c1=random.randint(0,topelite)
                 c2=random.randint(0,topelite)
                 pop.append(crossover(ranked[c1],ranked[c2]))
             
         # Print current best score
-        print scores[0][0]
+        #print scores[0][0]
         
     return scores[0][1]
+
+
+domain = [(0, 9)]*12
+r = geneticoptimize(domain, schedulecost)
+print('#Genetic sol: ', r)
+cost = schedulecost(r)
+print('#Genetic cost: ', cost) # ('#initial: ', 5983); ('#hillclimb: ', 3690); ('#annealing: ', 2789) ('#Genetic: ', 2868)
+printschedule(r)
+
